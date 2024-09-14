@@ -1,101 +1,73 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from "react";
+import { Message } from "@/app/interfaces/Message";
+import axios from "axios";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const [inputMessage, setInputMessage] = useState<string>('');
+    const [messages, setMessages] = useState<Message[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    const changeMessageHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // デバック用
+        console.log(e.target.value);
+        // テキストボックスのデータを inputMessage に設定
+        setInputMessage(e.target.value);
+    };
+
+    const sendHandler = async () => {
+        if (inputMessage.trim() === '') return;
+
+        const message: Message = { sender: 'user', content: inputMessage };
+        setMessages(prevMessages => [message, ...prevMessages]);
+
+        const uri = "/api/chat";
+        const response = await axios.post(uri, message);
+        console.log(response)
+        const botMessage: Message = response.data.bot;
+        setMessages(prevMessages => [botMessage, ...prevMessages]);
+
+        setInputMessage('');
+    };
+
+    return (
+        <main className="flex flex-col justify-center">
+            <div className="bg-white shadow-md p-4 z-10">
+                <h1 className="text-2xl p-5">Gemini Chatbot</h1>
+                <div className="flex">
+                    <input
+                        onChange={changeMessageHandler}
+                        value={inputMessage}
+                        type="text"
+                        className="w-full p-2 border border-gray-300 rounded-l mr-0"
+                        placeholder="Type your message..."
+                    />
+                    <button className="w-1/6 bg-blue-500 text-white p-2 rounded-r"
+                        onClick={sendHandler}
+                    >
+                        Send
+                    </button>
+                </div>
+            </div>
+
+            {/* メッセージ繰り返し　 */}
+            <div className="p-4 mt-50 mb-4 overflow-y-scroll">
+                {messages && messages.map((message, index) => (
+                    <div
+                        key={index}
+                        className="m-3 p-5 border border-gray-100 rounded">
+                        <span className={
+                            `inline-block mb-2 me-3 px-3 py-1
+                                rounded-full text-white
+                                text-sm font-semibold
+                                ${message.sender === 'user' ? 'bg-blue-600' : 'bg-gray-600'}
+                            `}>
+                            {message.sender === 'user' ? 'あなた' : 'ボット'}
+                        </span>
+                        <span>{message.content}</span>
+                    </div>
+                ))}
+            </div>
+        </main>
+    );
 }
